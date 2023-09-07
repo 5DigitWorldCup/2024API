@@ -1,5 +1,6 @@
 ﻿using API.Entities;
 using API.Services.Implementations;
+using API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -8,7 +9,7 @@ namespace API.Controllers;
 [Route("api/[controller]")]
 public class RegistrantsController : CrudController<Registrant>
 {
-	public RegistrantsController(ILogger<RegistrantsController> logger, RegistrantService service) : base(logger, service)
+	public RegistrantsController(ILogger<RegistrantsController> logger, IRegistrantService service) : base(logger, service)
 	{
 		
 	}

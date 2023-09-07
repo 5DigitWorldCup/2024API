@@ -1,6 +1,9 @@
+using API.Auth;
 using API.Configurations;
 using API.Services.Implementations;
+using API.Services.Interfaces;
 using Dapper;
+using Microsoft.AspNetCore.Authentication;
 using Serilog;
 using Serilog.Events;
 
@@ -30,7 +33,8 @@ SimpleCRUD.SetDialect(SimpleCRUD.Dialect.PostgreSQL);
 
 builder.Services.AddLogging();
 
-builder.Services.AddScoped<RegistrantService>();
+builder.Services.AddScoped<IRegistrantService, RegistrantService>();
+builder.Services.AddScoped<ISessionsService, SessionsService>();
 builder.Services.AddSingleton<IDbCredentials, DbCredentials>(serviceProvider =>
 {
 	string? connString = serviceProvider.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection");
@@ -42,6 +46,16 @@ builder.Services.AddSingleton<IDbCredentials, DbCredentials>(serviceProvider =>
 	return new DbCredentials(connString);
 });
 
+builder.Services.AddSession(options =>
+{
+	options.IdleTimeout = TimeSpan.FromDays(7);
+	options.Cookie.HttpOnly = true;
+	options.Cookie.IsEssential = true;
+});
+
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddAuthentication("CustomAuth").AddScheme<AuthenticationSchemeOptions, CustomAuthenticationHandler>("CustomAuth", null);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -50,6 +64,8 @@ if (app.Environment.IsDevelopment())
 	app.UseSwagger();
 	app.UseSwaggerUI();
 }
+
+app.UseSession();
 
 app.UseHttpsRedirection();
 
