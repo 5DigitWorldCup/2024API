@@ -56,6 +56,7 @@ class TournamentPlayerSerializer(serializers.HyperlinkedModelSerializer):
                   'osu_flag',
                   'is_organizer',
                   'in_roster',
+                  'in_backup_roster',
                   'team_id',
                   'team']
 

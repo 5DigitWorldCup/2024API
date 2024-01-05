@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import CheckConstraint, Q
 
 import teammgmt.models
 
@@ -23,6 +24,7 @@ class TournamentPlayer(models.Model):
                              on_delete=models.PROTECT,
                              default=teammgmt.models.TournamentTeam.get_default_pk)
     in_roster = models.BooleanField(default=False)
+    in_backup_roster = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.osu_username} ({self.osu_flag}|{self.discord_global_name})"
@@ -33,3 +35,5 @@ class TournamentPlayer(models.Model):
             models.Index(fields=['osu_user_id']),
             models.Index(fields=['team'])
         ]
+        constraints = [CheckConstraint(name="not_both_roster_and_backup",
+                                       check=~Q(in_roster=True, in_backup_roster=True))]
