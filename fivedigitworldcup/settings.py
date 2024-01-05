@@ -44,19 +44,26 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", 'django-insecure-u0r#lj965$_#(q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = strtobool(os.environ.get("DJANGO_DEBUG", "false"))
 
-ALLOWED_HOSTS = ['api.vps.5wc.stagec.xyz', 'vps.5wc.stagec.xyz', '.localhost', '127.0.0.1', '[::1]']
-# CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOWED_ORIGINS = ['http://vps.5wc.stagec.xyz:8080', 'https://vps.5wc.stagec.xyz:8080']
-CORS_ALLOWED_ORIGINS = ([f'http://vps.5wc.stagec.xyz:{port}' for port in range(8000, 9000)]
-                        + ["http://vps.5wc.stagec.xyz:2082"])
+
+_allowed_schemes: list = os.environ.get("ALLOWED_SCHEMES", "https").split(",")
+_frontend_domain: str = os.environ.get("FRONTEND_DOMAIN", "vps.5wc.stagec.xyz")
+_allowed_hosts: list = os.environ.get("ALLOWED_HOSTS", _frontend_domain).split(",")
+_allowed_ports: list[int] = list(map(int, os.environ.get("ALLOWED_PORTS", "443").split(",")))
+
+
+ALLOWED_HOSTS = _allowed_hosts + ['.localhost', '127.0.0.1', '[::1]']
+
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = ([f"http://*.vps.5wc.stagec.xyz:{port}" for port in range(8000, 9000)]
-                        + ["http://*.vps.5wc.stagec.xyz:2082"])
-CSRF_COOKIE_DOMAIN = ".vps.5wc.stagec.xyz"
-
-SESSION_COOKIE_DOMAIN = ".vps.5wc.stagec.xyz"
-
-# AUTH_USER_MODEL = "userauth.TournamentPlayer"
+CORS_ALLOWED_ORIGINS = [f"{scheme}://{hostname}:{port}"
+                        for scheme in _allowed_schemes
+                        for hostname in _allowed_hosts
+                        for port in _allowed_ports]
+CSRF_TRUSTED_ORIGINS = [f"{scheme}://*.{hostname}:{port}"
+                        for scheme in _allowed_schemes
+                        for hostname in _allowed_hosts
+                        for port in _allowed_ports]
+CSRF_COOKIE_DOMAIN = f".{_frontend_domain}"
+SESSION_COOKIE_DOMAIN = f".{_frontend_domain}"
 
 
 # Application definition
@@ -194,16 +201,11 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 50
 }
 
-# TODO: USE .ENV FOR CONFIGURATION
-
-# todo: use env var? use something more dynamic?
-OAUTH_REDIRECT_PREFIX = os.environ.get("OAUTH_REDIRECT_PREFIX", "http://127.0.0.1:8000")
 
 DISCORD_API_ENDPOINT = 'https://discord.com/api/v10'
 DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID", None)
 DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", None)
 DISCORD_REDIRECT_URI_SUFFIX = "/auth/discord/discord_code"
-DISCORD_REDIRECT_URI = f"{OAUTH_REDIRECT_PREFIX}{DISCORD_REDIRECT_URI_SUFFIX}"
 DISCORD_PSK = os.environ.get("DISCORD_PSK", "DONOTUSEINPRODUCTIONDONOTUSEINPRODUCTIONDONOTUSEINPRODUCTION")
 CHANNELS_DISCORD_WS_GROUP_NAME = "5wc_discord_signups"
 
@@ -212,4 +214,3 @@ OSU_OAUTH_ENDPOINT = "https://osu.ppy.sh/oauth"
 OSU_CLIENT_ID = os.environ.get("OSU_CLIENT_ID", None)
 OSU_CLIENT_SECRET = os.environ.get("OSU_CLIENT_SECRET", None)
 OSU_REDIRECT_URI_SUFFIX = "/auth/osu/code"
-OSU_REDIRECT_URI = f"{OAUTH_REDIRECT_PREFIX}{OSU_REDIRECT_URI_SUFFIX}"
