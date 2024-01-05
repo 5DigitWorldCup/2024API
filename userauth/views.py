@@ -1,5 +1,7 @@
 import json
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
@@ -64,9 +66,24 @@ class SessionDetails(viewsets.ViewSet):
         if not request.user.is_authenticated:
             return Response({"error": "not logged in"}, status=status.HTTP_401_UNAUTHORIZED)
         user = request.user
-        logout(request)
-        user.delete()
-        return Response(None, status=status.HTTP_204_NO_CONTENT)
+
+        try:
+            channel_layer = get_channel_layer()
+            # noinspection PyArgumentList
+            async_to_sync(channel_layer.group_send)(settings.CHANNELS_DISCORD_WS_GROUP_NAME,
+                                                    {
+                                                        "type": "registration.delete",
+                                                        "message": json.dumps({
+                                                            "discord_user_id": user.tournamentplayer.discord_user_id,
+                                                            "osu_user_id": user.tournamentplayer.osu_user_id,
+                                                            "action": "delete"  # errr... this should really be done at
+                                                                                # the consumer.py side of things
+                                                        })
+                                                    })
+        finally:
+            logout(request)
+            user.delete()
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
 
 
 class OauthWithRedirect:
@@ -210,4 +227,3 @@ class UserSerializer(serializers.ModelSerializer):
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
-

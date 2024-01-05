@@ -13,7 +13,16 @@ class DiscordRegistrationConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(settings.CHANNELS_DISCORD_WS_GROUP_NAME, self.channel_name)
 
-    def registration_new(self, event):
+    def _forward_event_message(self, event):
         payload = event["message"]
 
         self.send(text_data=json.dumps({"message": payload}))
+
+    def registration_new(self, event):
+        self._forward_event_message(event)
+
+    def registration_delete(self, event):
+        self._forward_event_message(event)
+
+    def registration_discord_switch(self, event):
+        self._forward_event_message(event)

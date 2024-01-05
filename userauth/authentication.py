@@ -47,12 +47,28 @@ class DiscordAndOsuAuthBackend(BaseBackend):
             try:
                 # found existing TournamentPlayer with different discord id
                 tournament_player: TournamentPlayer = TournamentPlayer.objects.filter(osu_user_id=osu_data['id'])[0]
+                old_discord_id = tournament_player.discord_user_id
+
                 tournament_player.discord_user_id = discord_data['id']
                 tournament_player.discord_username = discord_data['composite_username']
                 tournament_player.user.username = username
                 tournament_player.user.save()
                 tournament_player.save()
-                return tournament_player.user
+                try:
+                    channel_layer = get_channel_layer()
+                    # noinspection PyArgumentList
+                    async_to_sync(channel_layer.group_send)(
+                        settings.CHANNELS_DISCORD_WS_GROUP_NAME,
+                        {
+                            "type": "registration.discord.switch",
+                            "message": json.dumps({
+                                "old_discord_user_id": old_discord_id,
+                                "new_discord_user_id": tournament_player.discord_user_id,
+                                "action": "discord_switch"
+                            })
+                        })
+                finally:
+                    return tournament_player.user
             except IndexError:
                 pass
 
@@ -74,6 +90,7 @@ class DiscordAndOsuAuthBackend(BaseBackend):
                                               team=tournament_team)
             tourney_player.save()
             channel_layer = get_channel_layer()
+            # noinspection PyArgumentList
             async_to_sync(channel_layer.group_send)(settings.CHANNELS_DISCORD_WS_GROUP_NAME,
                                                     {
                                                         "type": "registration.new",
