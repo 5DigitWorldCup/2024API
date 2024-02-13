@@ -137,7 +137,7 @@ class TournamentPlayerSerializerWithBadges(TournamentPlayerSerializer):
 
 
 class TournamentPlayerViewSet(viewsets.ModelViewSet):
-    queryset = TournamentPlayer.objects.filter(user__is_staff=False)
+    queryset = TournamentPlayer.objects.filter(is_staff=False)
     queryset_include_staff = TournamentPlayer.objects.all()
     permission_classes = [PreSharedKeyAuthentication | ReadOnly]
 
@@ -231,8 +231,8 @@ class TournamentPlayerViewSet(viewsets.ModelViewSet):
         if type(new_staff_status) is not bool:
             raise ValidationError(f"type of `is_staff` is {type(new_staff_status)}, expected bool")
         tournament_player = self.get_object(include_staff=True)
-        tournament_player.user.is_staff = new_staff_status
-        tournament_player.user.save()
+        tournament_player.is_staff = new_staff_status
+        tournament_player.save()
         return Response({"msg": f"{tournament_player} is staff: {new_staff_status}"})
 
     def partial_update(self, request, pk=None, **kwargs):

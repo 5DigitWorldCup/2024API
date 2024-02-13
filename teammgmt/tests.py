@@ -83,7 +83,7 @@ class TestRegistrationCutoffTestCase(TestCaseWithTourneyUsers):
         self.assertContains(res, "required field", status_code=400)
         self.assertContains(res, "missing", status_code=400)
 
-    # def test_roster_after_regs_end(self):
+    # outdated, `is_staff` attribute moved to TournamentPlayer model
     def test_staff_cannot_manage_tournament_teams(self):
         request = APIRequestFactory().get(f'/teams/{self.tourney_team.osu_flag}/members')
         request.user = User.objects.create(is_staff=True)

@@ -442,8 +442,8 @@ class UpdateTournamentPlayerRolesTestCase(TestCase):
         res = set_tourney_user_staff(request, pk=self.tourney_user.discord_user_id)
 
         self.assertEqual(200, res.status_code)
-        self.tourney_user.user.refresh_from_db()
-        self.assertEqual(new_staff_status, self.tourney_user.user.is_staff)
+        self.tourney_user.refresh_from_db()
+        self.assertEqual(new_staff_status, self.tourney_user.is_staff)
 
     def test_set_tourney_player_staff_bad_type(self):
         factory = APIRequestFactory()

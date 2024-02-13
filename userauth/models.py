@@ -23,6 +23,7 @@ class TournamentPlayer(models.Model):
 
     is_organizer = models.BooleanField(default=False)
     is_captain = models.BooleanField(default=False)
+    is_staff = models.BooleanField(null=False, blank=False, default=False)
     team = models.ForeignKey(teammgmt.models.TournamentTeam,
                              related_name='players',
                              on_delete=models.PROTECT,
@@ -39,7 +40,8 @@ class TournamentPlayer(models.Model):
         indexes = [
             models.Index(fields=['discord_user_id', 'osu_user_id']),
             models.Index(fields=['osu_user_id']),
-            models.Index(fields=['team'])
+            models.Index(fields=['team']),
+            models.Index(fields=['is_staff'])
         ]
         constraints = [
             CheckConstraint(name="not_both_roster_and_backup",
